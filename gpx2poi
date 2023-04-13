@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]; then
+  echo "usage: $0 gpxdir poidir" >&2
+  exit 1
+fi
+
+for f in $1/*; do
+  bn=$(basename $f .gpx)
+  echo -ne "converting $bn... "
+  gpsbabel -i gpx -f $f -o garmin_gpi,sleep=5,category="Standard",bitmap=markers/${bn:3:20}.bmp,unique=0 -F $2/${bn}.gpi
+  echo "done."
+done
+

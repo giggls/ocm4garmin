@@ -1,0 +1,24 @@
+# Scripts for generating Garmin POI files (via gpsbabel) from OpenCampingMap
+
+# Usage
+
+First of all one might need to install the international-address-formatter python
+package.
+
+```
+pip install international-address-formatter
+```
+
+Afterwards it is possible to call gen_garmin_poi.py. Currently supported output
+langages are German and English. Feel free to send patches for others :)
+
+This script has two modes. One for generating POI-Output for a single
+given country and one to do this for all countries of the world.
+
+The script will generate GPX-Files which can then be converted to Garmin
+POI-Format using gpsbabel in a second step.
+
+To do this just call the provided script gpx2poi.
+
+This stuff will likely run on Unix only. Just go for WSL if you are forced to
+use Windows.
