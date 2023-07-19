@@ -9,6 +9,15 @@ package.
 pip install international-address-formatter
 ```
 
+Unfortunately this package seems to be broken.
+
+I was able to fix this using the following command:
+
+```
+recode latin1..utf8 $(python -m site --user-site)/international_address_formatter/data/worldwide.yml
+
+```
+
 Afterwards it is possible to call gen_garmin_poi.py. Currently supported output
 langages are German and English. Feel free to send patches for others :)
 
