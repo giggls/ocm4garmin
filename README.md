@@ -21,8 +21,11 @@ recode latin1..utf8 $(python -m site --user-site)/international_address_formatte
 Afterwards it is possible to call gen_garmin_poi.py. Currently supported output
 langages are German and English. Feel free to send patches for others :)
 
-This script has two modes. One for generating POI-Output for a single
-given country and one to do this for all countries of the world.
+This script has three modes:
+
+* One for generating POI-Output for a single given country,
+* one for generating POI-Output for all countries of the world
+* and one for generating POI-Output for a given bounding box
 
 The script will generate GPX-Files which can then be converted to Garmin
 POI-Format using gpsbabel in a second step.

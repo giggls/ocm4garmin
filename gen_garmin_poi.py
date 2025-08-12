@@ -414,8 +414,6 @@ sports = {
 parser = argparse.ArgumentParser(
     description='Generate OpenCampingMap GARMIN POI file for single or all countries or all')
 
-parser.add_argument('-c', '--country', default='all',
-                    help='Country to generate data for')
 parser.add_argument('-s', '--sitemap', default='https://opencampingmap.org/sitemap.xml')
 
 parser.add_argument('-u', '--csurl', default='https://opencampingmap.org/getcampsites')
@@ -423,6 +421,10 @@ parser.add_argument('-u', '--csurl', default='https://opencampingmap.org/getcamp
 parser.add_argument('-o', '--outdir', default='gpx')
 
 parser.add_argument('-l', '--lang', default='en', choices=['en', 'de'])
+
+exclusive_group = parser.add_mutually_exclusive_group()
+exclusive_group.add_argument('-c', '--country', default='all', help='Country to generate data for')
+exclusive_group.add_argument('-b', '--bbox', nargs=4, help='Bounding box to generate data for')
 
 args = parser.parse_args()
 
@@ -519,13 +521,20 @@ def gendesc(prop):
   
   return desc.replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
 
-def genpoi(country):
+def genpoi(country, bbox=None):
   ofopen = {}
   for cscat in cscats:
     ofopen[cscat]=None
     ofopen[cscat+'_private']=None
   
-  cspoi=requests.get(args.csurl+'?country='+country)
+  if bbox is None:
+    cspoi=requests.get(args.csurl+'?country='+country)
+    prefix=country+'_'
+  else:
+    bbstr=bbox[0]+','+bbox[1]+','+bbox[2]+','+bbox[3]
+    cspoi=requests.get(args.csurl+'?bbox='+bbstr)
+    prefix=''
+    
   jsondata=cspoi.json()
   for cs in jsondata['features']:
     cscat=cs['properties']['category']
@@ -535,7 +544,7 @@ def genpoi(country):
     # write data to open file open and initialize
     # if not already done
     if ofopen[cscat] is None:
-      ofopen[cscat] = open(os.path.join(args.outdir,country+'_'+cscat+'.gpx'), "w+")
+      ofopen[cscat] = open(os.path.join(args.outdir,prefix+cscat+'.gpx'), "w+")
       ofopen[cscat].write(gpxhead)
     
     ofopen[cscat].write('  <wpt lat="%s" lon="%s">\n' %(cs['geometry']['coordinates'][1],cs['geometry']['coordinates'][0]))
@@ -556,29 +565,23 @@ def genpoi(country):
       ofopen[cscat+'_private'].close()
       ofopen[cscat+'_private']=None
 
-if args.country == 'all':
-  # fetch list of available countries via OpenCampingMap sitemap.xml
-  # and call genpoi for all of them
-  smxml=requests.get(args.sitemap)
-  root = ET.fromstring(smxml.text)
-  for url in root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}sitemap'):
-    loc = url.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc').text
-    genpoi(os.path.splitext(os.path.basename(loc))[0])
-else:
-  genpoi(args.country)
-  
+if not os.path.isdir(args.outdir):
+  sys.stderr.write("Output directory >%s< does not exist!\n" % args.outdir)
+  sys.exit(1)
 
-sys.exit(0)
-sys.stdout.write(gpxhead)
-for s in res:
-  sys.stdout.write('  <wpt lat="%s" lon="%s">\n' %(s[1],s[0]))
-  if 'name' in s[3]:
-    sys.stdout.write('    <name>%s</name>\n' % s[3]['name'])
+if (args.bbox) == None:
+  if args.country == 'all':
+    # fetch list of available countries via OpenCampingMap sitemap.xml
+    # and call genpoi for all of them
+    smxml=requests.get(args.sitemap)
+    root = ET.fromstring(smxml.text)
+    for url in root.findall('{http://www.sitemaps.org/schemas/sitemap/0.9}sitemap'):
+      loc = url.find('{http://www.sitemaps.org/schemas/sitemap/0.9}loc').text
+      genpoi(os.path.splitext(os.path.basename(loc))[0])
   else:
-    sys.stdout.write('    <name>unbenannt</name>\n')
-  sys.stdout.write('    cat: %s\n' % s[2])
-  sys.stdout.write('  </wpt>\n')
-
-sys.stdout.write('</gpx>\n')
-conn.close()
+    genpoi(args.country)
+else:
+  genpoi(None,args.bbox)
+  
+sys.exit(0)
 
