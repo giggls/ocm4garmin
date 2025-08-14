@@ -547,6 +547,10 @@ def genpoi(country, bbox=None):
       ofopen[cscat] = open(os.path.join(args.outdir,prefix+cscat+'.gpx'), "w+")
       ofopen[cscat].write(gpxhead)
     
+    if cs['geometry'] is None:
+      sys.stderr.write("ignoring invalid object: %s\n" % cs['id'])
+      continue
+    
     ofopen[cscat].write('  <wpt lat="%s" lon="%s">\n' %(cs['geometry']['coordinates'][1],cs['geometry']['coordinates'][0]))
     if 'name' in cs['properties']:
       ofopen[cscat].write('    <name>%s</name>\n' % cs['properties']['name'].replace('&','&amp;').replace('<','&lt;').replace('>','&gt;'))
